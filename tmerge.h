@@ -55,8 +55,9 @@ struct TInputFiles {
 	GVec<GStr> files; //same order
 	GVec<GStr> tmpfiles; //all the temp files created by this
 	GList<TInputRecord> recs; //next record for each
+	int decompThreads; //htslib threads decompressing each input file (0 = none)
 	TInputFiles():crec(NULL), solo(NULL), readers(true), files(), tmpfiles(),
-			recs(true, true, true) { }
+			recs(true, true, true), decompThreads(0) { }
 	~TInputFiles() { delete solo; solo=NULL; }
 	void Add(const char* fn);
 	int count() { return files.Count(); }

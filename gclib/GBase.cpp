@@ -512,15 +512,27 @@ char* rstrchr(char* str, char ch) {  /* returns a pointer to the rightmost
   The given buf is resized to read the entire line in memory
     -- even when it's abnormally long
   */
+// The stream is locked once per line rather than by every getc() call (that per-character locking dominated
+// GTF parsing time).
+#ifndef _WIN32
+ #define FGETLINE_LOCK(f) flockfile(f)
+ #define FGETLINE_UNLOCK(f) funlockfile(f)
+ #define FGETLINE_GETC(f) getc_unlocked(f)
+#else
+ #define FGETLINE_LOCK(f)
+ #define FGETLINE_UNLOCK(f)
+ #define FGETLINE_GETC(f) getc(f)
+#endif
 char* fgetline(char* & buf, int& buf_cap, FILE *stream, off_t* f_pos, int* linelen) {
   //reads a char at a time until \n and/or \r are encountered
   int c=0;
   GDynArray<char> arr(buf, buf_cap);
   off_t fpos=(f_pos!=NULL) ? *f_pos : 0;
-  while ((c=getc(stream))!=EOF) {
+  FGETLINE_LOCK(stream);
+  while ((c=FGETLINE_GETC(stream))!=EOF) {
     if (c=='\n' || c=='\r') {
        if (c=='\r') {
-         if ((c=getc(stream))!='\n') ungetc(c,stream);
+         if ((c=FGETLINE_GETC(stream))!='\n') ungetc(c,stream);
                                 else fpos++;
          }
        fpos++;
@@ -529,6 +541,7 @@ char* fgetline(char* & buf, int& buf_cap, FILE *stream, off_t* f_pos, int* linel
     fpos++;
     arr.Push((char)c);
     } //while i<buf_cap-1
+  FGETLINE_UNLOCK(stream);
   //if (linelen!=NULL) *linelen=i;
   if (linelen!=NULL) *linelen=arr.Count();
   if (f_pos!=NULL) *f_pos=fpos;

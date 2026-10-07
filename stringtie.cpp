@@ -322,6 +322,10 @@ int main(int argc, char* argv[]) {
 
  GVec<int> alncounts(30); //keep track of the number of read alignments per chromosome [gseq_id]
 
+#ifndef NOTHREADS
+ // with -p the thread reading the alignments limits the run, and BGZF decompression is about a third of its work
+ if (num_cpus>1) bamreader.decompThreads=1;
+#endif
  int bamcount=bamreader.start(); //setup and open input files
 
 

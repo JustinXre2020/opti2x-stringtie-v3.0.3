@@ -422,6 +422,11 @@ class GSamReader {
       bopen(fn, cram_ref, required_fields);
    }
 
+   // Decompress the input with n htslib worker threads; returns false if they could not be set up
+   bool setThreads(int n) {
+      return hts_file!=NULL && hts_set_threads(hts_file, n)==0;
+   }
+
    sam_hdr_t* header() {
       return hts_file ? hdr : NULL;
    }

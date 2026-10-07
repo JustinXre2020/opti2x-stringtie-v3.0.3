@@ -1,5 +1,6 @@
 #include "rlink.h"
 #include "GBitVec.h"
+#include "bpcov_prefix.h"
 #include <float.h>
 #include "GThreads.h"
 
@@ -17027,43 +17028,7 @@ void count_good_junctions(BundleData* bdata) {
 	//fprintf(stderr,"Compute coverages:\n");
 
 	// this code enssures that I can find interval coverages very fast
-	int m=int((bpcov[1].Count()-1)/BSIZE);
-	//fprintf(stderr,"m=%d refstart=%d refend=%d bpcount=%d\n",m,refstart,refend,bpcov[1].Count());
-	int k=0;
-	float prev_val[3]={0,0,0};
-	float prev_sum[3]={0,0,0};
-	while(k<m) {
-		int end=(k+1)*BSIZE;
-
-
-		//fprintf(stderr,"end=%d\n",end);
-		for(int i=k*BSIZE;i<end;i++) {
-
-			for(int s=0;s<3;s++) {
-				//fprintf(stderr,"(1)bpcov[%d][%d]=%f ",s,i,bpcov[s][i]);
-				bpcov[s][i]+=prev_val[s];
-				if(bpcov[s][i]<0) bpcov[s][i]=0;
-				prev_val[s]=bpcov[s][i];
-				//fprintf(stderr,"(2)bpcov[%d][%d]=%f ",s,i,bpcov[s][i]);
-				bpcov[s][i]+=prev_sum[s];
-				prev_sum[s]=bpcov[s][i];
-				//fprintf(stderr,"(2)bpcov[%d][%d]=%f ",s,i,bpcov[s][i]);
-				//fprintf(stderr,"bpPos[%d][%d]: prev_val=%f prev_sum=%f\n",s,i,prev_val[s],prev_sum[s]);
-			}
-		}
-		for(int s=0;s<3;s++) prev_sum[s]=0;
-		k++;
-	}
-
-	for(int i=k*BSIZE;i<bpcov[1].Count();i++)
-		for(int s=0;s<3;s++) {
-			bpcov[s][i]+=prev_val[s];
-			if(bpcov[s][i]<0) bpcov[s][i]=0;
-			prev_val[s]=bpcov[s][i];
-			bpcov[s][i]+=prev_sum[s];
-			prev_sum[s]=bpcov[s][i];
-			//fprintf(stderr,"bpPos[%d][%d]: cov=%f sumbpcov=%f\n",s,i,prev_val[s],prev_sum[s]);
-		}
+	bpcovPrefixSums(bpcov,BSIZE);
 
 	if(resort) junction.Sort();
 
